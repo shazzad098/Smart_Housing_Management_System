@@ -17,6 +17,16 @@ export enum VisitorStatus {
   UPCOMING = 'Upcoming'
 }
 
+export type UserRole = 'admin' | 'resident' | 'security';
+
+export interface User {
+  name: string;
+  email: string;
+  role: UserRole;
+  flatNo?: string; // Only for residents
+  avatar: string;
+}
+
 export interface Bill {
   id: string;
   type: string;

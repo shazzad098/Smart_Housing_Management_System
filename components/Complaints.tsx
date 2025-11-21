@@ -1,18 +1,28 @@
 
 import React, { useState } from 'react';
-import { Complaint, ComplaintStatus } from '../types';
-import { Plus, X, CheckCircle } from 'lucide-react';
+import { Complaint, ComplaintStatus, User } from '../types';
+import { Plus, X, CheckCircle, FileText, Calendar, Activity, User as UserIcon } from 'lucide-react';
+
+interface ComplaintsProps {
+  user: User;
+}
 
 const initialComplaints: Complaint[] = [
-  { id: 'CMPT-072', category: 'Maintenance', date: '15 July 2024', status: ComplaintStatus.RESOLVED, description: 'Leaking tap in kitchen' },
-  { id: 'CMPT-071', category: 'Security', date: '12 July 2024', status: ComplaintStatus.IN_PROGRESS, description: 'Unknown car parked in my spot' },
-  { id: 'CMPT-069', category: 'Amenities', date: '10 July 2024', status: ComplaintStatus.NEW, description: 'Gym AC not cooling enough' },
+  { id: 'CMPT-072', category: 'Maintenance', date: '15 July 2024', status: ComplaintStatus.RESOLVED, description: 'Leaking tap in kitchen. Water is dripping constantly causing wastage.' },
+  { id: 'CMPT-071', category: 'Security', date: '12 July 2024', status: ComplaintStatus.IN_PROGRESS, description: 'Unknown car parked in my spot (A-101) since yesterday evening.' },
+  { id: 'CMPT-069', category: 'Amenities', date: '10 July 2024', status: ComplaintStatus.NEW, description: 'Gym AC not cooling enough during morning hours.' },
 ];
 
-const Complaints: React.FC = () => {
+const Complaints: React.FC<ComplaintsProps> = ({ user }) => {
   const [complaintsList, setComplaintsList] = useState<Complaint[]>(initialComplaints);
   const [activeTab, setActiveTab] = useState<'All' | 'New' | 'In Progress' | 'Resolved'>('All');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Submit Modal State
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  
+  // View Details Modal State
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  
   const [newComplaint, setNewComplaint] = useState({
     category: 'Maintenance',
     description: ''
@@ -43,10 +53,22 @@ const Complaints: React.FC = () => {
     };
 
     setComplaintsList([complaint, ...complaintsList]);
-    setIsModalOpen(false);
+    setIsSubmitModalOpen(false);
     setNewComplaint({ category: 'Maintenance', description: '' });
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  const handleStatusChange = (id: string, newStatus: ComplaintStatus) => {
+    const updatedList = complaintsList.map(c => 
+      c.id === id ? { ...c, status: newStatus } : c
+    );
+    setComplaintsList(updatedList);
+    
+    // Update the currently selected complaint so the modal reflects the change immediately
+    if (selectedComplaint && selectedComplaint.id === id) {
+      setSelectedComplaint({ ...selectedComplaint, status: newStatus });
+    }
   };
 
   return (
@@ -64,14 +86,14 @@ const Complaints: React.FC = () => {
         </div>
       )}
 
-      {/* Modal */}
-      {isModalOpen && (
+      {/* Submit New Complaint Modal (Resident Only) */}
+      {isSubmitModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">Submit New Complaint</h3>
                     <button 
-                        onClick={() => setIsModalOpen(false)} 
+                        onClick={() => setIsSubmitModalOpen(false)} 
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500"
                     >
                         <X size={20} />
@@ -118,18 +140,111 @@ const Complaints: React.FC = () => {
         </div>
       )}
 
+      {/* View Details Modal */}
+      {selectedComplaint && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg text-blue-600 dark:text-blue-400">
+                           <FileText size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Complaint Details</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{selectedComplaint.id}</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setSelectedComplaint(null)} 
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                <div className="p-6 space-y-6">
+                    {/* Meta Info */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                <Activity size={12} /> Category
+                            </p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedComplaint.category}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                <Calendar size={12} /> Date
+                            </p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedComplaint.date}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                <Activity size={12} /> Status
+                            </p>
+                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedComplaint.status)}`}>
+                                {selectedComplaint.status}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider font-bold">Description</p>
+                         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                            {selectedComplaint.description}
+                         </p>
+                    </div>
+
+                    {/* Admin Action: Change Status */}
+                    {user.role === 'admin' && (
+                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Update Status</label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={selectedComplaint.status}
+                                    onChange={(e) => handleStatusChange(selectedComplaint.id, e.target.value as ComplaintStatus)}
+                                    className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white cursor-pointer"
+                                >
+                                    <option value={ComplaintStatus.NEW}>New</option>
+                                    <option value={ComplaintStatus.IN_PROGRESS}>In Progress</option>
+                                    <option value={ComplaintStatus.RESOLVED}>Resolved</option>
+                                </select>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                Changing the status will automatically notify the resident.
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end">
+                    <button 
+                        onClick={() => setSelectedComplaint(null)}
+                        className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-start">
         <div>
            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Complaints</h2>
-           <p className="text-gray-500 dark:text-gray-400 mt-1">View and manage all your submitted complaints.</p>
+           <p className="text-gray-500 dark:text-gray-400 mt-1">
+             {user.role === 'admin' ? 'Review and manage complaints raised by residents.' : 'View and manage all your submitted complaints.'}
+           </p>
         </div>
-        <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
-        >
-          <Plus size={18} />
-          Submit New Complaint
-        </button>
+        {/* Submit button hidden for Admins */}
+        {user.role === 'resident' && (
+          <button 
+              onClick={() => setIsSubmitModalOpen(true)}
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
+          >
+            <Plus size={18} />
+            Submit New Complaint
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -171,7 +286,12 @@ const Complaints: React.FC = () => {
                   </span>
                 </div>
                 <div className="col-span-2 text-right">
-                   <button className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 text-sm font-medium">View Details</button>
+                   <button 
+                     onClick={() => setSelectedComplaint(item)}
+                     className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 text-sm font-medium hover:underline"
+                   >
+                     View Details
+                   </button>
                 </div>
               </div>
             ))}

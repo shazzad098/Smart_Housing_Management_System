@@ -1,9 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import { Bell, Search, Menu, User, Settings, LogOut, CheckCircle } from 'lucide-react';
+import { Bell, Search, Menu, User as UserIcon, Settings, LogOut, CheckCircle } from 'lucide-react';
+import { User } from '../types';
 
-const Layout: React.FC = () => {
+interface LayoutProps {
+  user: User;
+  onLogout: () => void;
+}
+
+const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,6 +48,7 @@ const Layout: React.FC = () => {
       case '/chat': return 'Community Chat';
       case '/my-flat': return 'My Flat';
       case '/settings': return 'Settings';
+      case '/security': return 'Security Gate';
       default: return 'SocietyHub';
     }
   };
@@ -64,7 +71,7 @@ const Layout: React.FC = () => {
 
       {/* Sidebar */}
       <div className={`fixed lg:static inset-y-0 left-0 z-30 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-200 ease-in-out`}>
-        <Sidebar onCloseMobile={() => setIsMobileMenuOpen(false)} />
+        <Sidebar user={user} onCloseMobile={() => setIsMobileMenuOpen(false)} onLogout={onLogout} />
       </div>
 
       {/* Main Content */}
@@ -152,7 +159,7 @@ const Layout: React.FC = () => {
               >
                 <div className="relative">
                   <img 
-                    src="https://picsum.photos/id/64/100/100" 
+                    src={user.avatar} 
                     alt="User" 
                     className={`w-9 h-9 rounded-full border-2 object-cover transition-colors ${
                       isProfileOpen 
@@ -166,9 +173,11 @@ const Layout: React.FC = () => {
                   <p className={`font-medium text-sm transition-colors ${
                     isProfileOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
                   }`}>
-                    Alex Morgan
+                    {user.name}
                   </p>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs">A-101</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs capitalize">
+                    {user.flatNo ? user.flatNo : user.role}
+                  </p>
                 </div>
               </button>
 
@@ -177,31 +186,33 @@ const Layout: React.FC = () => {
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                      <div className="flex items-center gap-3 mb-3">
                        <img 
-                        src="https://picsum.photos/id/64/100/100" 
+                        src={user.avatar} 
                         alt="User" 
                         className="w-12 h-12 rounded-full border-2 border-white dark:border-gray-600 shadow-sm object-cover" 
                        />
                        <div>
-                         <p className="font-semibold text-gray-900 dark:text-white">Alex Morgan</p>
-                         <p className="text-xs text-gray-500 dark:text-gray-400">Resident • A-101</p>
+                         <p className="font-semibold text-gray-900 dark:text-white">{user.name}</p>
+                         <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role} {user.flatNo && `• ${user.flatNo}`}</p>
                        </div>
                      </div>
                      <div className="flex gap-2">
                        <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold border border-blue-200 dark:border-blue-800">
-                         PREMIUM
+                         {user.role === 'admin' ? 'SUPER ADMIN' : 'STANDARD'}
                        </span>
                      </div>
                   </div>
                   <div className="p-2 space-y-1">
-                    <button 
-                      onClick={() => { navigate('/my-flat'); setIsProfileOpen(false); }} 
-                      className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
-                    >
-                       <div className="p-1.5 rounded-md bg-gray-100 dark:bg-gray-700 group-hover:bg-white dark:group-hover:bg-gray-600 transition-colors text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                         <User size={16} />
-                       </div>
-                       My Profile
-                    </button>
+                    {user.role === 'resident' && (
+                      <button 
+                        onClick={() => { navigate('/my-flat'); setIsProfileOpen(false); }} 
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+                      >
+                        <div className="p-1.5 rounded-md bg-gray-100 dark:bg-gray-700 group-hover:bg-white dark:group-hover:bg-gray-600 transition-colors text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                          <UserIcon size={16} />
+                        </div>
+                        My Profile
+                      </button>
+                    )}
                     <button 
                       onClick={() => { navigate('/settings'); setIsProfileOpen(false); }} 
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
@@ -214,7 +225,7 @@ const Layout: React.FC = () => {
                   </div>
                   <div className="p-2 border-t border-gray-200 dark:border-gray-700">
                     <button 
-                      onClick={() => setIsProfileOpen(false)}
+                      onClick={() => { onLogout(); setIsProfileOpen(false); }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
                     >
                        <div className="p-1.5 rounded-md bg-red-50 dark:bg-red-900/30 group-hover:bg-white dark:group-hover:bg-red-900/50 transition-colors text-red-500">

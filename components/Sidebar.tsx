@@ -10,27 +10,36 @@ import {
   Settings, 
   LogOut,
   Home,
-  ScanLine
+  ScanLine,
+  ShieldCheck
 } from 'lucide-react';
+import { User } from '../types';
 
 interface SidebarProps {
+  user: User;
   onCloseMobile: () => void;
+  onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
-  const navItems = [
-    { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { path: '/bills', icon: <Receipt size={20} />, label: 'Bill Payments' },
-    { path: '/visitors', icon: <Users size={20} />, label: 'Visitors' },
-    { path: '/complaints', icon: <AlertCircle size={20} />, label: 'Complaints' },
-    { path: '/chat', icon: <MessageSquare size={20} />, label: 'Community Chat' },
-    { path: '/security', icon: <ScanLine size={20} />, label: 'Security Gate' },
+const Sidebar: React.FC<SidebarProps> = ({ user, onCloseMobile, onLogout }) => {
+  
+  // Define all possible nav items
+  const allNavItems = [
+    { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard', roles: ['admin', 'resident'] },
+    { path: '/bills', icon: <Receipt size={20} />, label: 'Bill Payments', roles: ['admin', 'resident'] },
+    { path: '/visitors', icon: <Users size={20} />, label: 'Visitors', roles: ['admin', 'resident', 'security'] },
+    { path: '/complaints', icon: <AlertCircle size={20} />, label: 'Complaints', roles: ['admin', 'resident'] },
+    { path: '/chat', icon: <MessageSquare size={20} />, label: 'Community Chat', roles: ['admin', 'resident', 'security'] },
+    { path: '/security', icon: <ScanLine size={20} />, label: 'Security Gate', roles: ['admin', 'security'] },
   ];
 
+  // Filter items based on user role
+  const navItems = allNavItems.filter(item => item.roles.includes(user.role));
+
   const settingsItems = [
-    { path: '/my-flat', icon: <Building2 size={20} />, label: 'My Flat' },
-    { path: '/settings', icon: <Settings size={20} />, label: 'Settings' },
-  ];
+    { path: '/my-flat', icon: <Building2 size={20} />, label: 'My Flat', roles: ['resident'] },
+    { path: '/settings', icon: <Settings size={20} />, label: 'Settings', roles: ['admin', 'resident', 'security'] },
+  ].filter(item => item.roles.includes(user.role));
 
   return (
     <div className="w-64 bg-blue-900 h-full text-white flex flex-col shadow-xl">
@@ -84,15 +93,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       </div>
 
       <div className="p-4 border-t border-blue-800">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-blue-800 transition-colors cursor-pointer">
-          <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs font-bold text-white">
-            AM
+        <div 
+          onClick={onLogout}
+          className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-blue-800 transition-colors cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+            {user.avatar ? (
+              <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
+            ) : (
+              user.name.substring(0, 2).toUpperCase()
+            )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-white">Alex Morgan</p>
-            <p className="text-xs text-blue-300 truncate">View Profile</p>
+            <p className="text-sm font-medium truncate text-white">{user.name}</p>
+            <p className="text-xs text-blue-300 truncate capitalize">{user.role}</p>
           </div>
-          <LogOut size={16} className="text-blue-300" />
+          <LogOut size={16} className="text-blue-300 group-hover:text-red-300 transition-colors" />
         </div>
       </div>
     </div>
