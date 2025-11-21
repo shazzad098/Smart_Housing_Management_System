@@ -30,7 +30,8 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onCloseMobile, onLogout }) => {
     { path: '/visitors', icon: <Users size={20} />, label: 'Visitors', roles: ['admin', 'resident', 'security'] },
     { path: '/complaints', icon: <AlertCircle size={20} />, label: 'Complaints', roles: ['admin', 'resident'] },
     { path: '/chat', icon: <MessageSquare size={20} />, label: 'Community Chat', roles: ['admin', 'resident', 'security'] },
-    { path: '/security', icon: <ScanLine size={20} />, label: 'Security Gate', roles: ['admin', 'security'] },
+    // Updated: Security Gate is now ONLY for security role
+    { path: '/security', icon: <ScanLine size={20} />, label: 'Security Gate', roles: ['security'] },
   ];
 
   // Filter items based on user role
