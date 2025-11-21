@@ -1,0 +1,7 @@
+{
+  "name": "SocietyHub",
+  "description": "A comprehensive Smart Housing Society Management System featuring dashboard analytics, bill payments, visitor tracking, complaint management, and community chat.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
